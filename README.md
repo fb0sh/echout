@@ -23,3 +23,9 @@ def handle_record(record: EchoRecord):
 ```
 
 可以在此处进行后续的处理
+
+# how to use?
+
+1. 安装 python3
+2. `pip install flask`
+3. `python echout.py`
