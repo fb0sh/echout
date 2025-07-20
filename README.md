@@ -2,6 +2,8 @@
 
 数据外带平台
 
+[Get .py](https://github.com/fb0sh/echout/releases)
+
 # 友好的日志界面
 
 <img width="2307" height="1375" alt="image" src="https://github.com/user-attachments/assets/ca705553-791c-49d6-9d03-753fce19e7d2" />
