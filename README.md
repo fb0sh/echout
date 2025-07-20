@@ -2,7 +2,7 @@
 
 数据外带平台
 
-[Get .py](https://github.com/fb0sh/echout/releases)
+[Releases](https://github.com/fb0sh/echout/releases)
 
 # 友好的日志界面
 
